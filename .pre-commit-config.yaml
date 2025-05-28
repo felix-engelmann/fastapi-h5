@@ -17,7 +17,7 @@ repos:
     rev: v0.11.11
     hooks:
         - id: ruff
-          args: [--fix, pyproject.toml].
+          args: [--fix, pyproject.toml]
         - id: ruff
           name: sort imports with ruff
           args: [ --select, I, --fix ]

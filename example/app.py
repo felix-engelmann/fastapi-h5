@@ -1,8 +1,9 @@
-from contextlib import nullcontext
 import time
+from contextlib import nullcontext
 from typing import Any, ContextManager, Tuple
-from fastapi import FastAPI
+
 import numpy as np
+from fastapi import FastAPI
 
 from fastapi_h5 import router
 
