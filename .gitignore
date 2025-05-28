@@ -1,3 +1,5 @@
 build
+.idea
+out
 *.egg-info
 __pycache__

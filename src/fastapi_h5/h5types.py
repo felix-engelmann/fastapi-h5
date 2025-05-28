@@ -1,5 +1,5 @@
 import time
-from typing import NewType, Any, Literal
+from typing import Any, Literal, NewType
 
 from pydantic import BaseModel, Field, field_validator
 

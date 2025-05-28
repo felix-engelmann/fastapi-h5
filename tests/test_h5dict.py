@@ -1,17 +1,17 @@
 import asyncio
-from contextlib import nullcontext
 import logging
+from contextlib import nullcontext
 from typing import Any, ContextManager, Tuple
 
 import aiohttp
+import h5pyd
 import numpy as np
 import pytest
 import uvicorn
 from fastapi import FastAPI
-from fastapi_h5.h5routes import router
 from readerwriterlock.rwlock import RWLockFair
 
-import h5pyd
+from fastapi_h5 import router
 
 
 @pytest.mark.asyncio

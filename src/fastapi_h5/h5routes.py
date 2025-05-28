@@ -1,47 +1,42 @@
 import base64
-from contextlib import nullcontext
 import copy
 import gzip
 import logging
-import time
-from typing import Any, ContextManager, Literal, Tuple
+from typing import Any, Literal
 
 import numpy as np
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
 from fastapi_h5.h5types import (
-    H5Root,
-    H5Group,
-    H5Attribute,
-    H5Shape,
-    H5Type,
-    H5IntType,
-    H5FloatType,
-    H5StrType,
-    H5ValuedAttribute,
-    H5ScalarShape,
-    H5SimpleShape,
-    H5CompType,
-    H5NamedType,
-    H5Link,
-    H5Dataset,
     H5UUID,
+    H5Attribute,
+    H5CompType,
+    H5Dataset,
+    H5FloatType,
+    H5Group,
+    H5IntType,
+    H5Link,
+    H5NamedType,
+    H5Root,
+    H5ScalarShape,
+    H5Shape,
+    H5SimpleShape,
+    H5StrType,
+    H5Type,
+    H5ValuedAttribute,
 )
 
 router = APIRouter()
 
-# only activate for running it directly, otherwise it overwrites cli.py basic config
-# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 
 def _path_to_uuid(path: list[str], collection_type: Literal["g-", "d-"]) -> H5UUID:
     abspath = "/" + "/".join(path)
-    # print("abspath", abspath)
+    logger.debug("abspath %s", abspath)
     uuid = base64.b16encode(abspath.encode()).decode()
-    # print("uuid from function is", str(id(obj)).encode() + b"-" + uuid)
     return H5UUID(collection_type + "h5dict-" + uuid)
 
 
@@ -53,10 +48,10 @@ def _get_obj_at_path(
     if isinstance(path, str):
         path = path.split("/")
     for p in path:
-        # print("path part is:", p)
+        logger.debug("path part is: %s", p)
         if p == "":
             continue
-        # print("traverse", obj)
+        logger.debug("traverse %s", obj)
         obj = obj[p]
         clean_path.append(p)
     return obj, clean_path
@@ -67,7 +62,6 @@ def _uuid_to_obj(data: dict[str, Any], uuid: str) -> tuple[Any, list[str]]:
     col_type, idstr, path = uuid.split("-")
     path = base64.b16decode(path).decode()
     logger.debug("raw path %s", path)
-    # assert id(data) == int(idstr)
     return _get_obj_at_path(data, path)
 
 
@@ -179,10 +173,10 @@ def _get_group_links(obj: Any, path: list[str]) -> list[H5Link]:
 def _get_attr(
     aobj: dict[str, Any], name: str, include_values: bool = True
 ) -> H5Attribute | H5ValuedAttribute | None:
-    # print("get attribute")
+    logger.debug("get attribute")
     if name in aobj:
         h5shape, h5type = _make_shape_type(aobj[name])
-        # print("shape and type ret", h5shape, h5type)
+        logger.debug("ret shape %s type %s", h5shape, h5type)
         if h5shape is not None and h5type is not None:
             ret = H5Attribute(name=name, shape=h5shape, type=h5type)
             if include_values:
@@ -197,7 +191,7 @@ def _get_attr(
 def _make_attrs(
     aobj: dict[str, Any], include_values: bool = False
 ) -> list[H5Attribute] | list[H5ValuedAttribute]:
-    # print("make attributes of ", aobj)
+    logger.debug("make attributes of %s", aobj)
     attrs = []
     if isinstance(aobj, dict):
         for key, value in aobj.items():
@@ -220,11 +214,11 @@ def _get_obj_attrs(
         if "_attrs" in data:
             return _make_attrs(data["_attrs"], include_values=include_values)
     else:
-        # print("normal attr fetch")
+        logger.debug("normal attr fetch")
         parent, _ = _get_obj_at_path(data, path[:-1])
-        # print("parent is", parent)
+        logger.debug("parent is %s", parent)
         if f"{path[-1]}_attrs" in parent:
-            # print( "make attrs for")
+            logger.debug("make attrs for")
             return _make_attrs(
                 parent[f"{path[-1]}_attrs"], include_values=include_values
             )
@@ -284,7 +278,7 @@ def datasets(req: Request, uuid: H5UUID) -> H5Dataset:
         obj, path = _uuid_to_obj(data, uuid)
         logger.debug("return dataset for obj %s", obj)
         ret = _dataset_from_obj(data, path, obj, uuid)
-        # print("return dset", ret)
+        logger.debug("return dset %s", ret)
         if ret is None:
             raise HTTPException(status_code=404, detail="Dataset not found")
         return ret
@@ -320,7 +314,7 @@ def links(req: Request, uuid: H5UUID) -> dict[Literal["links"], list[H5Link]]:
 def attribute(
     req: Request, typ: Literal["groups", "datasets"], uuid: H5UUID, name: str
 ) -> H5ValuedAttribute:
-    # print("get attr with name", typ, uuid, name)
+    logger.debug("get attr with name %s %s %s", typ, uuid, name)
     data, lock = req.app.state.get_data()
     with lock:
         obj, path = _uuid_to_obj(data, uuid)
@@ -395,75 +389,3 @@ def read_root(req: Request) -> H5Root:
         ret = H5Root(root=uuid)
         return ret
     raise Exception("data object is not a dict")
-
-
-app = FastAPI()
-
-app.include_router(router)
-
-
-def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
-    dt = np.dtype({"names": ["a", "b"], "formats": [float, int]})
-
-    arr = np.array([(0.5, 1)], dtype=dt)
-
-    changing = np.ones((5, int(time.time()) % 10 + 5))
-    data = {
-        "map": {
-            "x": [
-                np.float64(-14.96431272),
-                np.float64(-14.76401095),
-                np.float64(-14.56276384),
-                np.float64(-14.361908),
-                np.float64(-14.16112703),
-            ],
-            "y": [
-                np.float64(-10.00637736),
-                np.float64(-10.00502708),
-                np.float64(-10.00403313),
-                np.float64(-10.00349819),
-                np.float64(-10.00320074),
-            ],
-            "values": [
-                np.float32(0.6831444),
-                np.float32(0.0),
-                np.float32(0.039953336),
-                np.float32(0.14946304),
-                np.float32(0.0),
-            ],
-        },
-        "live": 34,
-        "other": {"third": [1, 2, 3]},  # only _attrs allowed in root
-        "other_attrs": {"NX_class": "NXother"},
-        "image": np.ones((1000, 1000)),
-        "image_attrs": {"listattr": [42, 43, 44, 45]},
-        "changing_shape": changing,
-        "specialtyp": np.ones((10, 10), dtype=">u8"),
-        "specialtyp_attrs": {"NXdata": "NXspecial"},
-        "hello": "World",
-        "_attrs": {"NX_class": "NXentry"},
-        "composite": arr,
-        "composite_attrs": {"axes": ["I", "q"]},
-        "oned_attrs": {"NX_class": "NXdata", "axes": ["motor"], "signal": "data"},
-        "oned": {
-            "data": np.ones((42)),
-            "data_attrs": {"long_name": "photons"},
-            "motor": np.linspace(0, 1, 42),
-            "motor_attrs": {"long_name": "motor name"},
-        },
-        "twod_attrs": {
-            "NX_class": "NXdata",
-            "axes": ["motor", "."],
-            "signal": "frame",
-            "interpretation": "image",
-        },
-        "twod": {
-            "frame": np.ones((42, 42)),
-            "motor": np.linspace(0, 1, 42),
-            "motor_attrs": {"long_name": "motor name"},
-        },
-    }
-    return data, nullcontext()
-
-
-app.state.get_data = get_data
