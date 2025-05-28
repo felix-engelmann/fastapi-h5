@@ -1,0 +1,40 @@
+[project]
+name = "fastapi_h5"
+authors = [
+  { name="Felix Engelmann", email="felix-github@nlogn.org" },
+]
+description = "FastAPI routes to expose objects via hdf5-rest"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dynamic = ["version"]
+
+dependencies = [
+    "fastapi"
+]
+
+
+[project.optional-dependencies]
+tests = [
+"uvicorn",
+    "pytest",
+    "pytest-asyncio",
+    "aiohttp",
+    "h5pyd",
+    "readerwriterlock",
+]
+
+[project.urls]
+Homepage = "https://github.com/pypa/sampleproject"
+Issues = "https://github.com/pypa/sampleproject/issues"
+
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
