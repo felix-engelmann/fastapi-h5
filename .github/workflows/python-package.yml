@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-  
+
 jobs:
   build:
 
@@ -32,4 +32,4 @@ jobs:
         ruff format --check
     - name: Test with pytest
       run: |
-        pytest tests/test* --log-cli-level=INFO 
+        pytest tests/test* --log-cli-level=INFO

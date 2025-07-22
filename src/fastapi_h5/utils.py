@@ -1,7 +1,9 @@
-from typing import Literal, Any
 import base64
-import numpy as np
 import copy
+import logging
+from typing import Any, Literal
+
+import numpy as np
 
 from fastapi_h5.h5types import (
     H5UUID,
@@ -9,11 +11,9 @@ from fastapi_h5.h5types import (
     H5CompType,
     H5Dataset,
     H5FloatType,
-    H5Group,
     H5IntType,
     H5Link,
     H5NamedType,
-    H5Root,
     H5ScalarShape,
     H5Shape,
     H5SimpleShape,
@@ -21,7 +21,6 @@ from fastapi_h5.h5types import (
     H5Type,
     H5ValuedAttribute,
 )
-import logging
 
 logger = logging.getLogger()
 
@@ -80,6 +79,10 @@ def _canonical_to_h5(canonical: str) -> H5Type | None:
 def _make_shape_type(obj: Any) -> tuple[H5Shape | None, H5Type | None]:
     h5shape: H5Shape | None = None
     h5type: H5Type | None = None
+
+    if callable(obj):
+        obj = obj()
+
     if isinstance(obj, int):
         h5shape = H5ScalarShape()
         h5type = H5IntType(base="H5T_STD_I64LE")
@@ -113,7 +116,7 @@ def _make_shape_type(obj: Any) -> tuple[H5Shape | None, H5Type | None]:
             logging.debug("convert np dtype %s  to %s", arr.dtype, h5type)
 
         except Exception as e:
-            logger.error("esception in handling code %s", e.__repr__())
+            logger.error("exception in handling code %s", e.__repr__())
 
     return h5shape, h5type
 
