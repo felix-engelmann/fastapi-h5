@@ -8,37 +8,22 @@ from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
-from fastapi_h5.utils import (
-    _uuid_to_obj,
-    _dataset_from_obj,
-    _path_to_uuid,
-    _get_obj_attrs,
-    _get_group_links,
-    _get_group_link,
-)
-
 from fastapi_h5.h5types import (
     H5UUID,
-    H5Dataset,
-    H5ValuedAttribute,
-    H5Link,
     H5Attribute,
-    H5UUID,
-    H5Attribute,
-    H5CompType,
     H5Dataset,
-    H5FloatType,
     H5Group,
-    H5IntType,
     H5Link,
-    H5NamedType,
     H5Root,
-    H5ScalarShape,
-    H5Shape,
-    H5SimpleShape,
-    H5StrType,
-    H5Type,
     H5ValuedAttribute,
+)
+from fastapi_h5.utils import (
+    _dataset_from_obj,
+    _get_group_link,
+    _get_group_links,
+    _get_obj_attrs,
+    _path_to_uuid,
+    _uuid_to_obj,
 )
 
 router = APIRouter()

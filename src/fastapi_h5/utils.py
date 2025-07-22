@@ -1,7 +1,9 @@
-from typing import Literal, Any
 import base64
-import numpy as np
 import copy
+import logging
+from typing import Any, Literal
+
+import numpy as np
 
 from fastapi_h5.h5types import (
     H5UUID,
@@ -9,11 +11,9 @@ from fastapi_h5.h5types import (
     H5CompType,
     H5Dataset,
     H5FloatType,
-    H5Group,
     H5IntType,
     H5Link,
     H5NamedType,
-    H5Root,
     H5ScalarShape,
     H5Shape,
     H5SimpleShape,
@@ -21,7 +21,6 @@ from fastapi_h5.h5types import (
     H5Type,
     H5ValuedAttribute,
 )
-import logging
 
 logger = logging.getLogger()
 
