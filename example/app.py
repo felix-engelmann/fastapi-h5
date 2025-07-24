@@ -9,6 +9,8 @@ import numpy as np
 from fastapi import FastAPI
 
 from fastapi_h5 import router
+from fastapi_h5.h5types import H5CalculatedDataset, H5SimpleShape
+from fastapi_h5.utils import _canonical_to_h5
 
 app = FastAPI()
 
@@ -33,6 +35,17 @@ def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
         new_size = (np.array(img.shape) / factor).astype(np.int64)
         img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
         return img
+
+
+    def calced():
+        arr = np.ones((10,10))
+
+        h5shape = H5SimpleShape(dims=list(arr.shape))
+
+        canonical = arr.dtype.descr[0][1]
+        h5type = _canonical_to_h5(canonical)
+
+        return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=lambda : arr)
 
     changing = np.ones((5, int(time.time()) % 10 + 5))
     data = {
@@ -65,6 +78,7 @@ def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
         "other_attrs": {"NX_class": "NXother"},
         "image": np.ones((1000, 1000)),
         "image_scaled": {str(i): partial(scale_image, i) for i in range(2, 10)},
+        "fancy": calced,
         "image_attrs": {"listattr": [42, 43, 44, 45]},
         "changing_shape": changing,
         "specialtyp": np.ones((10, 10), dtype=">u8"),

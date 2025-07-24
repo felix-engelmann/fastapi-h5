@@ -20,6 +20,7 @@ from fastapi_h5.h5types import (
     H5StrType,
     H5Type,
     H5ValuedAttribute,
+    H5CalculatedDataset
 )
 
 logger = logging.getLogger()
@@ -82,6 +83,8 @@ def _make_shape_type(obj: Any) -> tuple[H5Shape | None, H5Type | None]:
 
     if callable(obj):
         obj = obj()
+        if isinstance(obj, H5CalculatedDataset):
+            return obj.shape, obj.type
 
     if isinstance(obj, int):
         h5shape = H5ScalarShape()

@@ -16,6 +16,7 @@ from fastapi_h5.h5types import (
     H5Link,
     H5Root,
     H5ValuedAttribute,
+    H5CalculatedDataset,
 )
 from fastapi_h5.utils import (
     _dataset_from_obj,
@@ -43,6 +44,8 @@ def values(
 
         if callable(obj):
             obj = obj()
+            if isinstance(obj, H5CalculatedDataset):
+                obj = obj.get_value()
 
         if type(obj) in [int, float, str]:
             return {"value": obj}
