@@ -2,7 +2,7 @@ import logging
 import time
 from contextlib import nullcontext
 from functools import partial
-from typing import Any, ContextManager, Tuple
+from typing import Any, ContextManager, Sequence, Tuple
 
 import cv2
 import numpy as np
@@ -24,19 +24,19 @@ def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
 
     arr = np.array([(0.5, 1)], dtype=dt)
 
-    def get_42():
+    def get_42() -> int:
         return 42
 
-    def full_image() -> np.array:
+    def full_image() -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
         return np.ones((1000, 1000))
 
-    def scale_image(factor):
+    def scale_image(factor: int) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]:
         img = full_image()
-        new_size = (np.array(img.shape) / factor).astype(np.int64)
+        new_size: Sequence[int] = list((np.array(img.shape) / factor).astype(np.int64))
         img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
         return img
 
-    def calced():
+    def calced() -> H5CalculatedDataset | None:
         arr = np.ones((10, 10))
 
         h5shape = H5SimpleShape(dims=list(arr.shape))
@@ -44,7 +44,10 @@ def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
         canonical = arr.dtype.descr[0][1]
         h5type = _canonical_to_h5(canonical)
 
-        return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=lambda: arr)
+        if h5shape is not None and h5type is not None:
+            return H5CalculatedDataset(
+                shape=h5shape, type=h5type, get_value=lambda: arr
+            )
 
     changing = np.ones((5, int(time.time()) % 10 + 5))
     data = {

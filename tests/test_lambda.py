@@ -3,7 +3,7 @@ import logging
 import random
 from contextlib import nullcontext
 from functools import partial
-from typing import Any, ContextManager, Tuple
+from typing import Any, ContextManager, Sequence, Tuple
 
 import cv2
 import h5pyd
@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 import uvicorn
 from fastapi import FastAPI
+from numpy import dtype, float64, ndarray
 
 from fastapi_h5 import router
 from fastapi_h5.h5types import H5CalculatedDataset, H5SimpleShape
@@ -24,18 +25,20 @@ async def test_lambda() -> None:
     app.include_router(router, prefix="/results")
 
     def get_data() -> Tuple[dict[str, Any], ContextManager[Any]]:
-        def get_42():
+        def get_42() -> int:
             return 42
 
-        def full_image() -> np.array:
+        def full_image() -> ndarray[tuple[int, int], dtype[float64]]:
             return np.ones((1000, 1000))
 
         def never_run() -> None:
             raise Exception
 
-        def scale_image(factor):
+        def scale_image(factor: int) -> ndarray[tuple[int, int], dtype[float64]]:
             img = full_image()
-            new_size = (np.array(img.shape) / factor).astype(np.int64)
+            new_size: Sequence[int] = list(
+                (np.array(img.shape) / factor).astype(np.int64)
+            )
             img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
             return img
 
@@ -46,7 +49,7 @@ async def test_lambda() -> None:
             "image_scaled": {str(i): partial(scale_image, i) for i in range(2, 10)},
             "double": get_42,
         }
-        return data, nullcontext()  # type: ignore
+        return data, nullcontext()
 
     app.state.get_data = get_data
 
@@ -81,11 +84,11 @@ async def test_caching() -> None:
     app.include_router(router, prefix="/results")
 
     def get_data() -> Tuple[dict[str, Any], ContextManager[Any]]:
-        def rand():
+        def rand() -> np.ndarray[tuple[int, ...], dtype[float64]]:
             return np.ones((100, 100)) * random.random()
 
         data = {"random": rand}
-        return data, nullcontext()  # type: ignore
+        return data, nullcontext()
 
     app.state.get_data = get_data
 
@@ -125,7 +128,7 @@ async def test_fancy() -> None:
     app.include_router(router, prefix="/results")
 
     def get_data() -> Tuple[dict[str, Any], ContextManager[Any]]:
-        def get_ds():
+        def get_ds() -> H5CalculatedDataset:
             arr = np.ones((10, 10))
 
             h5shape = H5SimpleShape(dims=list(arr.shape))
@@ -133,20 +136,24 @@ async def test_fancy() -> None:
             canonical = arr.dtype.descr[0][1]
             h5type = _canonical_to_h5(canonical)
 
+            assert h5shape is not None
+            assert h5type is not None
             return H5CalculatedDataset(
                 shape=h5shape, type=h5type, get_value=lambda: arr
             )
 
-        def bad():
+        def bad() -> None:
             raise Exception("should never be called")
 
-        def get_meta():
+        def get_meta() -> H5CalculatedDataset:
             h5shape = H5SimpleShape(dims=[12, 12])
             h5type = _canonical_to_h5("<f8")
+            assert h5shape is not None
+            assert h5type is not None
             return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=bad)
 
         data = {"fullds": get_ds, "onlymeta": get_meta}
-        return data, nullcontext()  # type: ignore
+        return data, nullcontext()
 
     app.state.get_data = get_data
 
