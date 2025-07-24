@@ -8,6 +8,7 @@ import numpy as np
 from fastapi_h5.h5types import (
     H5UUID,
     H5Attribute,
+    H5CalculatedDataset,
     H5CompType,
     H5Dataset,
     H5FloatType,
@@ -79,6 +80,12 @@ def _canonical_to_h5(canonical: str) -> H5Type | None:
 def _make_shape_type(obj: Any) -> tuple[H5Shape | None, H5Type | None]:
     h5shape: H5Shape | None = None
     h5type: H5Type | None = None
+
+    if callable(obj):
+        obj = obj()
+        if isinstance(obj, H5CalculatedDataset):
+            return obj.shape, obj.type
+
     if isinstance(obj, int):
         h5shape = H5ScalarShape()
         h5type = H5IntType(base="H5T_STD_I64LE")
@@ -112,7 +119,7 @@ def _make_shape_type(obj: Any) -> tuple[H5Shape | None, H5Type | None]:
             logging.debug("convert np dtype %s  to %s", arr.dtype, h5type)
 
         except Exception as e:
-            logger.error("esception in handling code %s", e.__repr__())
+            logger.error("exception in handling code %s", e.__repr__())
 
     return h5shape, h5type
 

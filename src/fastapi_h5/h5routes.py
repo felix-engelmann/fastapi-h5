@@ -11,6 +11,7 @@ from starlette.responses import Response
 from fastapi_h5.h5types import (
     H5UUID,
     H5Attribute,
+    H5CalculatedDataset,
     H5Dataset,
     H5Group,
     H5Link,
@@ -40,6 +41,11 @@ def values(
         obj, _ = _uuid_to_obj(data, uuid)
         logger.debug("return value for obj %s", obj)
         logger.debug("selection %s", select)
+
+        if callable(obj):
+            obj = obj()
+            if isinstance(obj, H5CalculatedDataset):
+                obj = obj.get_value()
 
         if type(obj) in [int, float, str]:
             return {"value": obj}

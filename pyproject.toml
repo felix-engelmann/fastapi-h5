@@ -28,6 +28,7 @@ tests = [
     "aiohttp",
     "h5pyd",
     "readerwriterlock",
+    "opencv-python-headless",
 ]
 
 [project.urls]
