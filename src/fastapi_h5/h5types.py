@@ -1,5 +1,5 @@
 import time
-from typing import Any, Literal, NewType, Callable
+from typing import Any, Callable, Literal, NewType
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -108,6 +108,7 @@ class H5Dataset(H5Times):
         "fillTime": "H5D_FILL_TIME_IFSET",
         "layout": {"class": "H5D_CONTIGUOUS"},
     }
+
 
 class H5CalculatedDataset(BaseModel):
     shape: H5Shape

@@ -36,16 +36,15 @@ def get_data() -> Tuple[dict[str, Any], ContextManager[None]]:
         img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
         return img
 
-
     def calced():
-        arr = np.ones((10,10))
+        arr = np.ones((10, 10))
 
         h5shape = H5SimpleShape(dims=list(arr.shape))
 
         canonical = arr.dtype.descr[0][1]
         h5type = _canonical_to_h5(canonical)
 
-        return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=lambda : arr)
+        return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=lambda: arr)
 
     changing = np.ones((5, int(time.time()) % 10 + 5))
     data = {

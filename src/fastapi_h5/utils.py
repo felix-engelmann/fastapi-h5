@@ -8,6 +8,7 @@ import numpy as np
 from fastapi_h5.h5types import (
     H5UUID,
     H5Attribute,
+    H5CalculatedDataset,
     H5CompType,
     H5Dataset,
     H5FloatType,
@@ -20,7 +21,6 @@ from fastapi_h5.h5types import (
     H5StrType,
     H5Type,
     H5ValuedAttribute,
-    H5CalculatedDataset
 )
 
 logger = logging.getLogger()

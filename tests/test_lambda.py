@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 from contextlib import nullcontext
 from functools import partial
 from typing import Any, ContextManager, Tuple
@@ -10,10 +11,9 @@ import numpy as np
 import pytest
 import uvicorn
 from fastapi import FastAPI
-import random
 
 from fastapi_h5 import router
-from fastapi_h5.h5types import H5SimpleShape, H5CalculatedDataset
+from fastapi_h5.h5types import H5CalculatedDataset, H5SimpleShape
 from fastapi_h5.utils import _canonical_to_h5
 
 
@@ -73,6 +73,7 @@ async def test_lambda() -> None:
 
     await asyncio.sleep(0.5)
 
+
 @pytest.mark.asyncio
 async def test_caching() -> None:
     app = FastAPI()
@@ -80,13 +81,10 @@ async def test_caching() -> None:
     app.include_router(router, prefix="/results")
 
     def get_data() -> Tuple[dict[str, Any], ContextManager[Any]]:
-
         def rand():
-            return np.ones((100,100))* random.random()
+            return np.ones((100, 100)) * random.random()
 
-        data = {
-            "random": rand
-        }
+        data = {"random": rand}
         return data, nullcontext()  # type: ignore
 
     app.state.get_data = get_data
@@ -104,7 +102,7 @@ async def test_caching() -> None:
         assert f["random"].shape == (100, 100)
         full = f["random"][:]
         # fetching the full dataset at once is a single call to the function.
-        assert np.array_equal(full, np.ones((100,100))*full[0,0])
+        assert np.array_equal(full, np.ones((100, 100)) * full[0, 0])
 
         first = f["random"][:50]
         second = f["random"][50:]
@@ -127,7 +125,6 @@ async def test_fancy() -> None:
     app.include_router(router, prefix="/results")
 
     def get_data() -> Tuple[dict[str, Any], ContextManager[Any]]:
-
         def get_ds():
             arr = np.ones((10, 10))
 
@@ -136,20 +133,19 @@ async def test_fancy() -> None:
             canonical = arr.dtype.descr[0][1]
             h5type = _canonical_to_h5(canonical)
 
-            return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=lambda: arr)
+            return H5CalculatedDataset(
+                shape=h5shape, type=h5type, get_value=lambda: arr
+            )
 
         def bad():
             raise Exception("should never be called")
 
         def get_meta():
-            h5shape = H5SimpleShape(dims=[12,12])
-            h5type = _canonical_to_h5('<f8')
+            h5shape = H5SimpleShape(dims=[12, 12])
+            h5type = _canonical_to_h5("<f8")
             return H5CalculatedDataset(shape=h5shape, type=h5type, get_value=bad)
 
-        data = {
-            "fullds": get_ds,
-            "onlymeta": get_meta
-        }
+        data = {"fullds": get_ds, "onlymeta": get_meta}
         return data, nullcontext()  # type: ignore
 
     app.state.get_data = get_data
@@ -165,7 +161,7 @@ async def test_fancy() -> None:
             "/", "r", endpoint="http://localhost:5000/results", timeout=1, retries=0
         )
         assert f["fullds"].shape == (10, 10)
-        assert np.array_equal(f["fullds"], np.ones((10,10)))
+        assert np.array_equal(f["fullds"], np.ones((10, 10)))
 
         assert f["onlymeta"].shape == (12, 12)
         assert f["onlymeta"].dtype == np.float64
